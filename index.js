@@ -72,6 +72,7 @@ async function run() {
     const userCollection = db.collection("users");
     const parcelCollection = db.collection("parcels");
     const paymentCollection = db.collection("payments");
+    const riderCollection = db.collection("riders");
 
     // users related api
     app.post("/users", async (req, res) => {
@@ -79,17 +80,17 @@ async function run() {
       user.role = "user";
       user.createdAt = new Date();
 
-      const email = user.email
-      const useExists = await userCollection.findOne({email})
+      const email = user.email;
+      const useExists = await userCollection.findOne({ email });
       if (useExists) {
-        res.send({message: 'user exists'})
+        res.send({ message: "user exists" });
       }
 
       const result = await userCollection.insertOne(user);
       res.send(result);
     });
 
-    //parcel api
+    //parcel related api
     app.get("/parcels", async (req, res) => {
       const query = {};
       const { email } = req.query;
@@ -130,7 +131,7 @@ async function run() {
       res.send(result);
     });
 
-    // Payment releted api
+    // Payment related api
     // new payment
     app.post("/payment-checkout-system", async (req, res) => {
       const paymentInfo = req.body;
@@ -264,6 +265,55 @@ async function run() {
       const result = await cursor.toArray();
       res.send(result);
     });
+
+    // Riders related api Start
+    // get rider data
+    app.get("/riders", async (req, res) => {
+      const query = {};
+      if (req.query.status) {
+        query.status = req.query.status;
+      }
+      const cursor = riderCollection.find(query);
+      const result = await cursor.toArray();
+      res.send(result);
+    });
+
+    // approve + reject rider data
+    app.patch("/riders/:id", verifyFirebaseToken, async (req, res) => {
+      const status = req.body.status;
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const updateDoc = {
+        $set: {
+          status: status,
+        },
+      };
+      const result = await riderCollection.updateOne(query, updateDoc);
+      res.send(result);
+
+      if (status === 'approved') {
+        const email = req.body.email;
+        const userQuery = {email}
+        const updateUserRole = {
+          $set:{
+            role: 'rider'
+          }
+        }
+        const userResult = await userCollection.updateOne(userQuery, updateUserRole)
+      }
+    });
+
+    // create rider data
+    app.post("/riders", async (req, res) => {
+      const rider = req.body;
+      rider.status = "pending";
+      rider.createdAt = new Date();
+
+      const result = await riderCollection.insertOne(rider);
+      res.send(result);
+    });
+    // Riders related api End
+
     // ___________________________________________________________________________________
 
     // Send a ping to confirm a successful connection
