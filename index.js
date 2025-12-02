@@ -74,7 +74,15 @@ async function run() {
     const paymentCollection = db.collection("payments");
     const riderCollection = db.collection("riders");
 
-    // users related api
+    // ***** users related api start ******//
+    // get user
+    app.get("/users", verifyFirebaseToken, async (req, res) => {
+      const cursor = userCollection.find();
+      const result = await cursor.toArray();
+      res.send(result);
+    });
+
+    // user create fontend
     app.post("/users", async (req, res) => {
       const user = req.body;
       user.role = "user";
@@ -89,6 +97,7 @@ async function run() {
       const result = await userCollection.insertOne(user);
       res.send(result);
     });
+    // ***** users related api end ******//
 
     //parcel related api
     app.get("/parcels", async (req, res) => {
@@ -266,7 +275,7 @@ async function run() {
       res.send(result);
     });
 
-    // Riders related api Start
+    // ******** Riders related api Start ********
     // get rider data
     app.get("/riders", async (req, res) => {
       const query = {};
@@ -289,18 +298,23 @@ async function run() {
         },
       };
       const result = await riderCollection.updateOne(query, updateDoc);
-      res.send(result);
-
-      if (status === 'approved') {
+      
+     
+      if (status === "approved") {
         const email = req.body.email;
-        const userQuery = {email}
+        const userQuery = { email };
         const updateUserRole = {
-          $set:{
-            role: 'rider'
-          }
-        }
-        const userResult = await userCollection.updateOne(userQuery, updateUserRole)
+          $set: {
+            role: "rider",
+          },
+        };
+        const userResult = await userCollection.updateOne(
+          userQuery,
+          updateUserRole
+        );
+        
       }
+       res.send(result);
     });
 
     // create rider data
@@ -312,7 +326,7 @@ async function run() {
       const result = await riderCollection.insertOne(rider);
       res.send(result);
     });
-    // Riders related api End
+    // ******** Riders related api End ********
 
     // ___________________________________________________________________________________
 
