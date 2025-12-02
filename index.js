@@ -97,6 +97,21 @@ async function run() {
       const result = await userCollection.insertOne(user);
       res.send(result);
     });
+
+    // user role replace > admin
+    app.patch("/users/:id", async (req, res) => {
+      const id = req.params.id;
+      const roleInfo = req.body;
+      const query = { _id: new ObjectId(id) };
+      const updateDoc = {
+        $set: {
+          role: roleInfo.role,
+        },
+      };
+      const result = await userCollection.updateOne(query, updateDoc);
+      res.send(result);
+    });
+
     // ***** users related api end ******//
 
     //parcel related api
@@ -298,8 +313,7 @@ async function run() {
         },
       };
       const result = await riderCollection.updateOne(query, updateDoc);
-      
-     
+
       if (status === "approved") {
         const email = req.body.email;
         const userQuery = { email };
@@ -312,9 +326,8 @@ async function run() {
           userQuery,
           updateUserRole
         );
-        
       }
-       res.send(result);
+      res.send(result);
     });
 
     // create rider data
