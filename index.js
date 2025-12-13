@@ -14,7 +14,7 @@ admin.initializeApp({
 // payment system
 const stripe = require("stripe")(process.env.SPRITE_SECRET);
 
-const port = process.env.PORT || 3000;
+const port = process.env.PORT || 5000;
 
 // payment trackingId
 const crypto = require("crypto");
@@ -51,6 +51,14 @@ const verifyFirebaseToken = async (req, res, next) => {
     return res.status(401).send({ message: "unauthorized access" });
   }
 };
+
+// middleware admin verify 
+const verifyAdmin = async (req, res, next)=>{
+const email = req.decoded_email
+
+  next()
+
+}
 
 const uri = process.env.URI; // db data
 // Create a MongoClient with a MongoClientOptions object to set the Stable API version
@@ -99,7 +107,7 @@ async function run() {
     });
 
     // user role replace > admin
-    app.patch("/users/:id", async (req, res) => {
+    app.patch("/users/:id/role", verifyFirebaseToken, async (req, res) => {
       const id = req.params.id;
       const roleInfo = req.body;
       const query = { _id: new ObjectId(id) };
@@ -110,6 +118,17 @@ async function run() {
       };
       const result = await userCollection.updateOne(query, updateDoc);
       res.send(result);
+    });
+
+    
+    app.get("users/:id", async (req, res) => {});
+
+    // get role by email 
+    app.get("users/:email/role", async (req, res) => {
+      const email = req.params.email;
+      const query = { email };
+      const user = await userCollection.findOne(query);
+      res.send({ role: user?.role || "user" });
     });
 
     // ***** users related api end ******//
